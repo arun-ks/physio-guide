@@ -12,5 +12,5 @@ export default async function handler(req, res) {
     return;
   }
   console.log(process.env.TURSO_DATABASE_URL);
-  res.status(405).json({ error: "Method not allowed" });
+  res.status(405).json({ error: "Method not allowed " });
 }
