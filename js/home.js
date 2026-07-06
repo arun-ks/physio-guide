@@ -1,72 +1,83 @@
 import { getUserId } from "./storage.js";
 
 const userId = getUserId();
-
 let exercises = [];
-let historyMap = {};
+
+console.log("[HOME] userId:", userId);
 
 async function load() {
-  const [exRes, histRes] = await Promise.all([
-    fetch("/api/exercises"),
-    fetch(`/api/history?userId=${userId}`)
-  ]);
+  console.time("[HOME] total load");
 
-  exercises = await exRes.json();
-  const history = await histRes.json();
+  const res = await fetch(`/api/home?userId=${encodeURIComponent(userId)}`);
+  console.log("[HOME] /api/home status:", res.status);
 
-  historyMap = {};
-  history.forEach(h => {
-    historyMap[h.ExID] = h.LastCompletedTime;
-  });
+  exercises = await res.json();
+  console.log("[HOME] exercises loaded:", exercises);
 
   render();
+
+  console.timeEnd("[HOME] total load");
 }
 
 function daysSince(ts) {
   if (!ts) return "Never";
 
-  const diff = Date.now() / 1000 - ts;
-  return Math.floor(diff / 86400) + " days ago";
+  const diff = Date.now() / 1000 - Number(ts);
+  const days = Math.floor(diff / 86400);
+
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return `${days} days ago`;
+}
+
+function estimatedMinutes(e) {
+  const seconds =
+    e.SetsCount * (e.RepCount * (e.RepDurationSec + e.RepBreakSec)) +
+    (e.SetsCount - 1) * e.SetBreakSec;
+
+  return Math.max(1, Math.round(seconds / 60));
 }
 
 function render(filter = "") {
+  console.time("[HOME] render");
+
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
 
   const filtered = exercises.filter(e => {
     if (!filter) return true;
-    return e.MuscleGroups.toLowerCase().includes(filter.toLowerCase());
+    return (e.MuscleGroups || "").toLowerCase().includes(filter.toLowerCase());
   });
+
+  console.log("[HOME] filtered count:", filtered.length);
 
   filtered.forEach(e => {
-    const div = document.createElement("div");
-    div.className = "card";
+    const card = document.createElement("div");
+    card.className = "card";
 
-    const last = historyMap[e.ExID];
-
-    const duration =
-      e.SetsCount *
-      (e.RepCount * (e.RepDurationSec + e.RepBreakSec)) +
-      (e.SetsCount - 1) * e.SetBreakSec;
-
-    div.innerHTML = `
-      <img src="${e.Image1}" onclick="openExercise('${e.ExID}')"/>
-      <h3>${e.Name}</h3>
-      <p>${e.RepCount} reps × ${e.SetsCount} sets</p>
-      <p>${e.MuscleGroups}</p>
-      <p>~ ${Math.round(duration / 60)} min</p>
-      <p>Last: ${daysSince(last)}</p>
+    card.innerHTML = `
+      <img class="card-img" src="${e.Image1 || ""}" alt="${e.Name || ""}">
+      <div class="card-body">
+        <h3>${e.Name}</h3>
+        <p><strong>${e.RepCount}</strong> reps × <strong>${e.SetsCount}</strong> sets</p>
+        <p>${e.MuscleGroups}</p>
+        <p>~ ${estimatedMinutes(e)} min</p>
+        <p>Last: ${daysSince(e.LastCompletedTime)}</p>
+      </div>
     `;
 
-    div.onclick = () => {
-      window.location = `exercise.html?exid=${e.ExID}`;
+    card.onclick = () => {
+      console.log("[HOME] opening exercise:", e.ExID);
+      window.location = `exercise.html?exid=${encodeURIComponent(e.ExID)}`;
     };
 
-    grid.appendChild(div);
+    grid.appendChild(card);
   });
+
+  console.timeEnd("[HOME] render");
 }
 
-document.getElementById("filterInput").addEventListener("input", (e) => {
+document.getElementById("filterInput").addEventListener("input", e => {
   render(e.target.value);
 });
 
