@@ -1,7 +1,7 @@
 {
-  "name": "physio-exercise-guide",
+  "name": "physio-guide",
   "type": "module",
   "dependencies": {
-    "@libsql/client": "^0.6.0"
+    "@tursodatabase/serverless": "latest"
   }
 }
