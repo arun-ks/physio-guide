@@ -7,14 +7,37 @@ const exid = params.get("exid");
 let exercise;
 let running = false;
 
+console.log("[WORKOUT] exid:", exid);
+console.log("[WORKOUT] userId:", userId);
+
 async function load() {
-  const res = await fetch("/api/exercises");
-  const all = await res.json();
+  console.time("[WORKOUT] load exercise");
 
-  exercise = all.find(e => e.ExID === exid);
+  const res = await fetch(`/api/exercises?exid=${encodeURIComponent(exid)}`);
+  console.log("[WORKOUT] /api/exercises status:", res.status);
 
-  document.getElementById("img").src = exercise.Image1;
-  document.getElementById("instructions").innerText = exercise.Instructions;
+  const rows = await res.json();
+  exercise = rows[0];
+
+  console.log("[WORKOUT] exercise loaded:", exercise);
+
+  if (!exercise) {
+    document.getElementById("status").innerText = "Exercise not found";
+    return;
+  }
+
+  document.getElementById("img").src = exercise.Image1 || "";
+  document.getElementById("instructions").innerText = exercise.Instructions || "";
+
+  document.getElementById("details").innerHTML = `
+    <p><strong>Reps:</strong> ${exercise.RepCount}</p>
+    <p><strong>Rep duration:</strong> ${exercise.RepDurationSec} sec</p>
+    <p><strong>Rep break:</strong> ${exercise.RepBreakSec} sec</p>
+    <p><strong>Sets:</strong> ${exercise.SetsCount}</p>
+    <p><strong>Set break:</strong> ${exercise.SetBreakSec} sec</p>
+  `;
+
+  console.timeEnd("[WORKOUT] load exercise");
 }
 
 function sleep(ms) {
@@ -22,7 +45,12 @@ function sleep(ms) {
 }
 
 function speak(text) {
-  if (!("speechSynthesis" in window)) return;
+  if (!("speechSynthesis" in window)) {
+    console.warn("[WORKOUT] speechSynthesis not supported");
+    return;
+  }
+
+  console.log("[AUDIO]", text);
 
   speechSynthesis.cancel();
 
@@ -35,6 +63,7 @@ function speak(text) {
 }
 
 function setStatus(text) {
+  console.log("[STATUS]", text);
   document.getElementById("status").innerText = text;
 }
 
@@ -42,8 +71,7 @@ async function countdown(seconds, label = "") {
   for (let i = seconds; i > 0; i--) {
     if (!running) return;
 
-    const text = label ? `${label}: ${i}` : `${i}`;
-    setStatus(text);
+    setStatus(label ? `${label}: ${i}` : `${i}`);
     speak(String(i));
 
     await sleep(1000);
@@ -51,8 +79,9 @@ async function countdown(seconds, label = "") {
 }
 
 async function startWorkout() {
-  running = true;
+  if (!exercise) return;
 
+  running = true;
   document.getElementById("start").disabled = true;
 
   speak("Get ready");
@@ -66,8 +95,7 @@ async function startWorkout() {
     for (let r = 0; r < exercise.RepCount; r++) {
       if (!running) return;
 
-      const repText = `Set ${s + 1} of ${exercise.SetsCount}, Rep ${r + 1} of ${exercise.RepCount}`;
-      setStatus(repText);
+      setStatus(`Set ${s + 1} of ${exercise.SetsCount}, Rep ${r + 1} of ${exercise.RepCount}`);
       speak(String(r + 1));
 
       await sleep(exercise.RepDurationSec * 1000);
@@ -86,6 +114,8 @@ async function startWorkout() {
   speak("Exercise complete");
   setStatus("Exercise complete");
 
+  console.time("[WORKOUT] save history");
+
   await fetch("/api/history", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -95,6 +125,8 @@ async function startWorkout() {
       CompletedTime: Math.floor(Date.now() / 1000)
     })
   });
+
+  console.timeEnd("[WORKOUT] save history");
 
   await sleep(3000);
   window.location = "/";
