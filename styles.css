@@ -251,3 +251,66 @@ h1 {
     font-size: 26px;
   }
 }
+
+@media (max-width: 700px) {
+  .exercise-img {
+    max-height: 34vh;
+    padding: 8px;
+  }
+
+  .instructions {
+    font-size: 15px;
+    line-height: 1.35;
+    padding: 10px 12px;
+    margin: 10px 0;
+  }
+
+  .exercise-details {
+    display: flex;
+    gap: 6px;
+    margin: 8px 0 10px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .exercise-details p {
+    flex: 0 0 auto;
+    min-width: auto;
+    padding: 7px 9px;
+    font-size: 13px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .exercise-details strong {
+    display: inline;
+    margin: 0 3px 0 0;
+  }
+
+  #controls {
+    margin-top: 10px;
+    gap: 10px;
+  }
+
+  #controls button {
+    min-height: 64px;
+    font-size: 22px;
+    border-radius: 14px;
+  }
+
+  #status {
+    margin-top: 12px;
+    min-height: 42px;
+    font-size: 26px;
+  }
+
+  #exerciseName {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .exercise-page {
+    padding: 10px;
+  }
+}
+
