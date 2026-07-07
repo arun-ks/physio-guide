@@ -314,3 +314,47 @@ h1 {
   }
 }
 
+.exercise-group {
+  margin-bottom: 34px;
+}
+
+.group-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 6px 0 14px;
+  padding: 0 2px;
+}
+
+.group-header h2 {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: -0.03em;
+}
+
+.group-header span {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 18px;
+}
+
+@media (max-width: 700px) {
+  .group-header {
+    margin-top: 18px;
+  }
+
+  .group-header h2 {
+    font-size: 22px;
+  }
+
+  .group-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
